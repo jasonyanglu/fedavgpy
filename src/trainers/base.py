@@ -3,7 +3,7 @@ import torch
 import time
 from src.models.client import Client
 from src.utils.worker_utils import Metrics
-from src.models.worker import Worker
+from src.models.worker import Worker, LrdWorker
 
 
 class BaseTrainer(object):
@@ -109,13 +109,13 @@ class BaseTrainer(object):
 
             # Solve minimization locally
             soln, stat = c.local_train()
-            if self.print_result:
-                print("Round: {:>2d} | CID: {: >3d} ({:>2d}/{:>2d})| "
-                      "Param: norm {:>.4f} ({:>.4f}->{:>.4f})| "
-                      "Loss {:>.4f} | Acc {:>5.2f}% | Time: {:>.2f}s".format(
-                       round_i, c.cid, i, self.clients_per_round,
-                       stat['norm'], stat['min'], stat['max'],
-                       stat['loss'], stat['acc']*100, stat['time']))
+            # if self.print_result:
+            #     print("Round: {:>2d} | CID: {: >3d} ({:>2d}/{:>2d})| "
+            #           "Param: norm {:>.4f} ({:>.4f}->{:>.4f})| "
+            #           "Loss {:>.4f} | Acc {:>5.2f}% | Time: {:>.2f}s".format(
+            #            round_i, c.cid, i, self.clients_per_round,
+            #            stat['norm'], stat['min'], stat['max'],
+            #            stat['loss'], stat['acc']*100, stat['time']))
 
             # Add solutions and stats
             solns.append(soln)
@@ -135,16 +135,19 @@ class BaseTrainer(object):
 
         averaged_solution = torch.zeros_like(self.latest_model)
         # averaged_solution = np.zeros(self.latest_model.shape)
-        if self.simple_average:
-            num = 0
-            for num_sample, local_solution in solns:
-                num += 1
-                averaged_solution += local_solution
-            averaged_solution /= num
-        else:
-            for num_sample, local_solution in solns:
-                averaged_solution += num_sample * local_solution
-            averaged_solution /= self.all_train_data_num
+        # if self.simple_average:
+        #     num = 0
+        #     for num_sample, local_solution in solns:
+        #         num += 1
+        #         averaged_solution += local_solution
+        #     averaged_solution /= num
+        # else:
+        num_sample_sum = 0
+        for num_sample, local_solution in solns:
+            averaged_solution += num_sample * local_solution
+            num_sample_sum += num_sample
+        averaged_solution /= num_sample_sum
+        # averaged_solution *= (100 / self.clients_per_round)
 
         # averaged_solution = from_numpy(averaged_solution, self.gpu)
         return averaged_solution.detach()

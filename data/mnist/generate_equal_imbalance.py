@@ -6,6 +6,7 @@ import torchvision
 cpath = os.path.dirname(__file__)
 
 NUM_USER = 100
+IMBA_RATIO = 0.1
 SAVE = True
 DATASET_FILE = os.path.join(cpath, 'data')
 IMAGE_DATA = True
@@ -111,7 +112,12 @@ def main():
     for user in range(NUM_USER):
         print(user, np.array([len(v) for v in split_mnist_traindata]))
 
-        for d in choose_two_digit(split_mnist_traindata):
+        for i, d in enumerate(choose_two_digit(split_mnist_traindata)):
+            if i:
+                min_class_len = round(len(split_mnist_traindata[d][-1]) * IMBA_RATIO)
+                split_mnist_traindata[d][-1] = split_mnist_traindata[d][-1][:min_class_len]
+                min_class_len = round(len(split_mnist_testdata[d][-1]) * IMBA_RATIO)
+                split_mnist_testdata[d][-1] = split_mnist_testdata[d][-1][:min_class_len]
             l = len(split_mnist_traindata[d][-1])
             train_X[user] += split_mnist_traindata[d].pop().tolist()
             train_y[user] += (d * np.ones(l)).tolist()
@@ -123,8 +129,8 @@ def main():
     # Setup directory for train/test data
     print('>>> Set data path for MNIST.')
     image = 1 if IMAGE_DATA else 0
-    train_path = '{}/data/train/all_data_{}_equal_niid.pkl'.format(cpath, image)
-    test_path = '{}/data/test/all_data_{}_equal_niid.pkl'.format(cpath, image)
+    train_path = '{}/data/train/all_data_{}_equal_imbalance.pkl'.format(cpath, image)
+    test_path = '{}/data/test/all_data_{}_equal_imbalance.pkl'.format(cpath, image)
 
     dir_path = os.path.dirname(train_path)
     if not os.path.exists(dir_path):

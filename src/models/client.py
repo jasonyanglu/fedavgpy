@@ -86,6 +86,6 @@ class Client(object):
         else:
             dataloader, dataset = self.train_dataloader, self.train_data
 
-        tot_correct, loss = self.worker.local_test(dataloader)
+        test_eval_dict, loss = self.worker.local_test(dataloader)
 
-        return tot_correct, len(dataset), loss
+        return test_eval_dict, len(dataset), loss

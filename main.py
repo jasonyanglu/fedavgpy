@@ -7,6 +7,7 @@ import os
 from src.utils.worker_utils import read_data
 from config import OPTIMIZERS, DATASETS, MODEL_PARAMS, TRAINERS
 
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 def read_options():
     parser = argparse.ArgumentParser()

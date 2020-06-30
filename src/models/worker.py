@@ -1,5 +1,6 @@
 from src.utils.flops_counter import get_model_complexity_info
 from src.utils.torch_utils import get_flat_grad, get_state_dict, get_flat_params_from, set_flat_params_to
+from src.utils.evaluation_utils import evaluate_multiclass
 import torch.nn as nn
 import torch
 
@@ -77,13 +78,16 @@ class Worker(object):
                 2.2 loss
         """
         self.model.train()
-        train_loss = train_acc = train_total = 0
+        train_loss =  0
 
         for i in range(self.num_epoch * 10):
             x, y = next(iter(train_dataloader))
 
+        y_total = []
+        pred_total = []
+
         for epoch in range(self.num_epoch):
-            train_loss = train_acc = train_total = 0
+            train_loss = 0
             for batch_idx, (x, y) in enumerate(train_dataloader):
                 if self.gpu:
                     x, y = x.cuda(), y.cuda()
@@ -93,16 +97,16 @@ class Worker(object):
 
                 loss = criterion(pred, y)
                 loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), 60)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
                 self.optimizer.step()
 
                 _, predicted = torch.max(pred, 1)
-                correct = predicted.eq(y).sum().item()
-                target_size = y.size(0)
-
                 train_loss += loss.item() * y.size(0)
-                train_acc += correct
-                train_total += target_size
+
+                pred_total.extend(predicted.numpy())
+                y_total.extend(y.numpy())
+
+        train_total = len(y_total)
 
         local_solution = self.get_flat_model_params()
         param_dict = {"norm": torch.norm(local_solution).item(),
@@ -110,32 +114,35 @@ class Worker(object):
                       "min": local_solution.min().item()}
         comp = self.num_epoch * train_total * self.flops
         return_dict = {"comp": comp,
-                       "loss": train_loss / train_total,
-                       "acc": train_acc / train_total}
+                       "loss": train_loss / train_total}
         return_dict.update(param_dict)
+
+        multiclass_eval_dict = evaluate_multiclass(y_total, pred_total)
+        return_dict.update(multiclass_eval_dict)
+
         return local_solution, return_dict
 
     def local_test(self, test_dataloader):
         self.model.eval()
-        test_loss = test_acc = test_total = 0.
+        test_loss = 0
+        y_total = []
+        pred_total = []
         with torch.no_grad():
             for x, y in test_dataloader:
-                # print("test")
-                # from IPython import embed
-                # embed()
                 if self.gpu:
                     x, y = x.cuda(), y.cuda()
 
                 pred = self.model(x)
                 loss = criterion(pred, y)
                 _, predicted = torch.max(pred, 1)
-                correct = predicted.eq(y).sum()
 
-                test_acc += correct.item()
+                pred_total.extend(predicted.numpy())
+                y_total.extend(y.numpy())
+
                 test_loss += loss.item() * y.size(0)
-                test_total += y.size(0)
 
-        return test_acc, test_loss
+        multiclass_eval_dict = evaluate_multiclass(y_total, pred_total)
+        return multiclass_eval_dict, test_loss
 
 
 class LrdWorker(Worker):
@@ -158,7 +165,7 @@ class LrdWorker(Worker):
 
             loss = criterion(pred, y)
             loss.backward()
-            torch.nn.utils.clip_grad_norm(self.model.parameters(), 60)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
             # lr = 100/(400+current_step+i)
             self.optimizer.step()
 
@@ -205,7 +212,7 @@ class LrAdjustWorker(Worker):
 
             loss = criterion(pred, y)
             loss.backward()
-            torch.nn.utils.clip_grad_norm(self.model.parameters(), 60)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
             # lr = 100/(400+current_step+i)
             self.optimizer.step()
 

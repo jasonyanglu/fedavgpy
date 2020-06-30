@@ -181,9 +181,12 @@ class BaseTrainer(object):
 
         self.metrics.update_train_stats(round_i, stats_from_train_data)
         if self.print_result:
-            print('\n>>> Round: {: >4d} / Acc: {:.3%} / Loss: {:.4f} /'
+            print('\n>>> Round: {: >4d} / Acc: {:.3%} / MAvA: {:.3%} /'
+                  ' eGmean: {:.3%} / MFM: {:.3%} / MAUC: {:.3%} / Loss: {:.4f} /'
                   ' Grad Norm: {:.4f} / Grad Diff: {:.4f} / Time: {:.2f}s'.format(
-                   round_i, stats_from_train_data['acc'], stats_from_train_data['loss'],
+                   round_i, stats_from_train_data['acc'], stats_from_train_data['mava'],
+                   stats_from_train_data['egmean'], stats_from_train_data['mfm'],
+                   stats_from_train_data['mauc'], stats_from_train_data['loss'],
                    stats_from_train_data['gradnorm'], difference, end_time-begin_time))
             print('=' * 102 + "\n")
         return global_grads
@@ -208,20 +211,24 @@ class BaseTrainer(object):
         self.worker.set_flat_model_params(self.latest_model)
 
         num_samples = []
-        tot_corrects = []
+        test_eval_dict_list = []
+        tot_test_eval_dict = {}
         losses = []
         for c in self.clients:
-            tot_correct, num_sample, loss = c.local_test(use_eval_data=use_eval_data)
+            test_eval_dict, num_sample, loss = c.local_test(use_eval_data=use_eval_data)
 
-            tot_corrects.append(tot_correct)
+            test_eval_dict_list.append(test_eval_dict)
             num_samples.append(num_sample)
             losses.append(loss)
 
         ids = [c.cid for c in self.clients]
         groups = [c.group for c in self.clients]
 
-        stats = {'acc': sum(tot_corrects) / sum(num_samples),
-                 'loss': sum(losses) / sum(num_samples),
+        for key in test_eval_dict.keys():
+            tot_test_eval_dict[key] = np.mean([x[key] for x in test_eval_dict_list])
+
+        stats = {'loss': sum(losses) / sum(num_samples),
                  'num_samples': num_samples, 'ids': ids, 'groups': groups}
+        stats.update(tot_test_eval_dict)
 
         return stats

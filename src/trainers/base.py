@@ -184,10 +184,10 @@ class BaseTrainer(object):
             print('\n>>> Round: {: >4d} / Acc: {:.3%} / MAvA: {:.3%} /'
                   ' eGmean: {:.3%} / MFM: {:.3%} / MAUC: {:.3%} / Loss: {:.4f} /'
                   ' Grad Norm: {:.4f} / Grad Diff: {:.4f} / Time: {:.2f}s'.format(
-                   round_i, stats_from_train_data['acc'], stats_from_train_data['mava'],
-                   stats_from_train_data['egmean'], stats_from_train_data['mfm'],
-                   stats_from_train_data['mauc'], stats_from_train_data['loss'],
-                   stats_from_train_data['gradnorm'], difference, end_time-begin_time))
+                    round_i, stats_from_train_data['acc'], stats_from_train_data['mava'],
+                    stats_from_train_data['egmean'], stats_from_train_data['mfm'],
+                    stats_from_train_data['mauc'], stats_from_train_data['loss'],
+                    stats_from_train_data['gradnorm'], difference, end_time - begin_time))
             print('=' * 102 + "\n")
         return global_grads
 
@@ -198,10 +198,13 @@ class BaseTrainer(object):
         end_time = time.time()
 
         if self.print_result and round_i % self.eval_every == 0:
-            print('= Test = round: {} / acc: {:.3%} / '
-                  'loss: {:.4f} / Time: {:.2f}s'.format(
-                   round_i, stats_from_eval_data['acc'],
-                   stats_from_eval_data['loss'], end_time-begin_time))
+            print('= Test = round: {} / Acc: {:.3%} / MAvA: {:.3%} /'
+                  ' eGmean: {:.3%} / MFM: {:.3%} / MAUC: {:.3%} /'
+                  ' Loss: {:.4f} / Time: {:.2f}s'.format(
+                    round_i, stats_from_eval_data['acc'], stats_from_eval_data['mava'],
+                    stats_from_eval_data['egmean'], stats_from_eval_data['mfm'],
+                    stats_from_eval_data['mauc'], stats_from_eval_data['loss'],
+                    end_time - begin_time))
             print('=' * 102 + "\n")
 
         self.metrics.update_eval_stats(round_i, stats_from_eval_data)

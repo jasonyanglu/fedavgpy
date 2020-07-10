@@ -68,8 +68,8 @@ def main():
     trainset = torchvision.datasets.CIFAR10(DATASET_FILE, download=True, train=True)
     testset = torchvision.datasets.CIFAR10(DATASET_FILE, download=True, train=False)
 
-    train_cifar10 = ImageDataset(trainset.train_data, trainset.train_labels)
-    test_cifar10 = ImageDataset(testset.test_data, testset.test_labels)
+    train_cifar10 = ImageDataset(trainset.data, trainset.targets)
+    test_cifar10 = ImageDataset(testset.data, testset.targets)
 
     cifar10_traindata = []
     for number in range(10):

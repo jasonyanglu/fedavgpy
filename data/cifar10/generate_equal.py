@@ -67,8 +67,8 @@ def main():
     trainset = torchvision.datasets.CIFAR10(DATASET_FILE, download=True, train=True)
     testset = torchvision.datasets.CIFAR10(DATASET_FILE, download=True, train=False)
 
-    train_cifar10 = ImageDataset(trainset.train_data, trainset.train_labels)
-    test_cifar10 = ImageDataset(testset.test_data, testset.test_labels)
+    train_cifar10 = ImageDataset(trainset.data, trainset.targets)
+    test_cifar10 = ImageDataset(testset.data, testset.targets)
 
     cifar10_traindata = []
     for number in range(10):
@@ -76,7 +76,7 @@ def main():
         cifar10_traindata.append(train_cifar10.data[idx])
     min_number = min([len(dig) for dig in cifar10_traindata])
     for number in range(10):
-        cifar10_traindata[number] = cifar10_traindata[number][:min_number-1]
+        cifar10_traindata[number] = cifar10_traindata[number][:min_number]
 
     split_cifar10_traindata = []
     for digit in cifar10_traindata:

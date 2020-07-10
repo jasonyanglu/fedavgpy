@@ -77,7 +77,7 @@ def main():
         cifar10_traindata.append(train_cifar10.data[idx])
     min_number = min([len(dig) for dig in cifar10_traindata])
     for number in range(10):
-        cifar10_traindata[number] = cifar10_traindata[number][:min_number-1]
+        cifar10_traindata[number] = cifar10_traindata[number][:min_number]
 
     split_cifar10_traindata = []
     for digit in cifar10_traindata:

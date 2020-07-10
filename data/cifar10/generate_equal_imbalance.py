@@ -130,8 +130,8 @@ def main():
     # Setup directory for train/test data
     print('>>> Set data path for CIFAR10.')
     image = 1 if IMAGE_DATA else 0
-    train_path = '{}/data/train/all_data_{}_equal_niid.pkl'.format(cpath, image)
-    test_path = '{}/data/test/all_data_{}_equal_niid.pkl'.format(cpath, image)
+    train_path = '{}/data/train/all_data_{}_equal_imbalance.pkl'.format(cpath, image)
+    test_path = '{}/data/test/all_data_{}_equal_imbalance.pkl'.format(cpath, image)
 
     dir_path = os.path.dirname(train_path)
     if not os.path.exists(dir_path):

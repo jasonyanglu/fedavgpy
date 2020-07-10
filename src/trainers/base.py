@@ -45,7 +45,7 @@ class BaseTrainer(object):
             model.cuda()
             print('>>> Use gpu on device {}'.format(device))
         else:
-            print('>>> Don not use gpu')
+            print('>>> Do not use gpu')
 
     def setup_clients(self, dataset):
         """Instantiates clients based on given train and test data directories

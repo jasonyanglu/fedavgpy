@@ -78,7 +78,7 @@ class Worker(object):
                 2.2 loss
         """
         self.model.train()
-        train_loss =  0
+        train_loss = 0
 
         for i in range(self.num_epoch * 10):
             x, y = next(iter(train_dataloader))

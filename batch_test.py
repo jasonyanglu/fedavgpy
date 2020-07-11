@@ -102,7 +102,7 @@ class BatchCNN:
         train_loss = train_acc = train_total = 0
         for epoch in range(self.num_epoch):
             for batch_idx, (x, y) in enumerate(self.train_dataloader):
-                print('%d ' % batch_idx, end='')
+                # print('%d ' % batch_idx, end='')
                 self.optimizer.zero_grad()
                 pred = self.model(x)
 
@@ -119,21 +119,13 @@ class BatchCNN:
                 train_acc += correct
                 train_total += target_size
 
-            local_solution = self.get_flat_model_params()
-            param_dict = {"norm": torch.norm(local_solution).item(),
-                          "max": local_solution.max().item(),
-                          "min": local_solution.min().item()}
             comp = self.num_epoch * train_total * self.flops
             return_dict = {"comp": comp,
                            "loss": train_loss/train_total,
                            "acc": train_acc/train_total}
-            return_dict.update(param_dict)
 
-            print("Epoch: {:>2d} |  "
-                  "Param: norm {:>.4f} ({:>.4f}->{:>.4f})| "
-                  "Loss {:>.4f} | Acc {:>5.2f}%".format(
-                   epoch, return_dict['norm'], return_dict['min'], return_dict['max'], return_dict['loss'],
-                   return_dict['acc']*100))
+            print("Epoch: {:>2d} | Loss {:>.4f} | Acc {:>5.2f}%".format(
+                   epoch, return_dict['loss'], return_dict['acc']*100))
 
 
 

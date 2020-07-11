@@ -40,13 +40,13 @@ def read_options():
 class ImageDataset(object):
     def __init__(self, images, labels, options, normalize=False):
         if isinstance(images, torch.Tensor):
-            if not options['use_1d_feature']:
+            if options['use_1d_feature']:
                 self.data = images.view(-1, 784).numpy()/255
             else:
                 self.data = images.numpy()
         else:
             self.data = images
-        if normalize and not options['use_1d_feature']:
+        if normalize and options['use_1d_feature']:
             mu = np.mean(self.data.astype(np.float32), 0)
             sigma = np.std(self.data.astype(np.float32), 0)
             self.data = (self.data.astype(np.float32) - mu) / (sigma + 0.001)

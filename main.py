@@ -21,7 +21,7 @@ def read_options():
     parser.add_argument('--dataset',
                         help='name of dataset;',
                         type=str,
-                        default='mnist_all_data_0_equal_niid')
+                        default='mnist_all_data_1_niid')
     parser.add_argument('--model',
                         help='name of model;',
                         type=str,

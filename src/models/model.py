@@ -3,6 +3,8 @@ import torch.nn.functional as F
 import importlib
 import math
 
+from torchvision.models import resnet
+
 
 class Logistic(nn.Module):
     def __init__(self, in_dim, out_dim):
@@ -77,16 +79,16 @@ class CifarCnn(nn.Module):
         self.fc2 = nn.Linear(512, 128)
         self.fc3 = nn.Linear(128, out_dim)
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-                m.bias.data.zero_()
-            elif isinstance(m, nn.Linear):
-                stdv = 1. / math.sqrt(m.weight.size(1))
-                m.weight.data.uniform_(-stdv, stdv)
-                if m.bias is not None:
-                    m.bias.data.uniform_(-stdv, stdv)
+        # for m in self.modules():
+        #     if isinstance(m, nn.Conv2d):
+        #         n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        #         m.weight.data.normal_(0, math.sqrt(2. / n))
+        #         m.bias.data.zero_()
+        #     elif isinstance(m, nn.Linear):
+        #         stdv = 1. / math.sqrt(m.weight.size(1))
+        #         m.weight.data.uniform_(-stdv, stdv)
+        #         if m.bias is not None:
+        #             m.bias.data.uniform_(-stdv, stdv)
 
     def forward(self, x):
         out = F.relu(self.conv1(x))

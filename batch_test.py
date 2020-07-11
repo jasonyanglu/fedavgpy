@@ -119,13 +119,8 @@ class BatchCNN:
                 train_acc += correct
                 train_total += target_size
 
-            comp = self.num_epoch * train_total * self.flops
-            return_dict = {"comp": comp,
-                           "loss": train_loss/train_total,
-                           "acc": train_acc/train_total}
-
             print("Epoch: {:>2d} | Loss {:>.4f} | Acc {:>5.2f}%".format(
-                   epoch, return_dict['loss'], return_dict['acc']*100))
+                   epoch, train_loss/train_total, train_acc/train_total*100))
 
 
 

@@ -127,8 +127,6 @@ class BatchCNN:
                 test_loss = test_acc = test_total = 0.
                 with torch.no_grad():
                     for x, y in self.test_dataloader:
-                        if self.gpu:
-                            x, y = x.cuda(), y.cuda()
 
                         pred = self.model(x)
                         loss = self.criterion(pred, y)

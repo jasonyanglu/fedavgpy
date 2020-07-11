@@ -92,13 +92,14 @@ class BatchCNN:
         self.model = CifarCnn((3, 32, 32), 10)
         self.optimizer = GD(self.model.parameters(), lr=0.1, weight_decay=0.001)
         self.batch_size = 64
-        self.num_epoch = 10
+        self.num_epoch = 100
         self.train_dataloader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
         self.test_dataloader = DataLoader(test_data, batch_size=self.batch_size, shuffle=False)
         self.criterion = CrossEntropyLoss()
 
     def train(self):
 
+        self.model.train()
         train_loss = train_acc = train_total = 0
         for epoch in range(self.num_epoch):
             for batch_idx, (x, y) in enumerate(self.train_dataloader):
@@ -119,9 +120,27 @@ class BatchCNN:
                 train_acc += correct
                 train_total += target_size
 
-            print("Epoch: {:>2d} | Loss {:>.4f} | Acc {:>5.2f}%".format(
+            print("Epoch: {:>2d} | train loss {:>.4f} | train acc {:>5.2f}%".format(
                    epoch, train_loss/train_total, train_acc/train_total*100))
 
+            if epoch % 5 == 0:
+                test_loss = test_acc = test_total = 0.
+                with torch.no_grad():
+                    for x, y in self.test_dataloader:
+                        if self.gpu:
+                            x, y = x.cuda(), y.cuda()
+
+                        pred = self.model(x)
+                        loss = self.criterion(pred, y)
+                        _, predicted = torch.max(pred, 1)
+                        correct = predicted.eq(y).sum()
+
+                        test_acc += correct.item()
+                        test_loss += loss.item() * y.size(0)
+                        test_total += y.size(0)
+
+                print("Epoch: {:>2d} | test loss {:>.4f} | test acc {:>5.2f}%".format(
+                    epoch, test_loss / test_total, test_acc / test_total * 100))
 
 
 def main():

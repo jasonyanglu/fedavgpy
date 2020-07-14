@@ -3,6 +3,7 @@ from src.utils.torch_utils import get_flat_grad, get_state_dict, get_flat_params
 from src.utils.evaluation_utils import evaluate_multiclass
 import torch.nn as nn
 import torch
+import numpy as np
 
 criterion = nn.CrossEntropyLoss()
 mseloss = nn.MSELoss()
@@ -81,6 +82,7 @@ class Worker(object):
 
         y_total = []
         pred_total = []
+        prob_total = []
 
         train_loss = 0
         for epoch in range(self.num_epoch):
@@ -89,16 +91,17 @@ class Worker(object):
                     x, y = x.cuda(), y.cuda()
 
                 self.optimizer.zero_grad()
-                pred = self.model(x)
+                prob = self.model(x)
 
-                loss = criterion(pred, y)
+                loss = criterion(prob, y)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
                 self.optimizer.step()
 
-                _, predicted = torch.max(pred, 1)
+                _, predicted = torch.max(prob, 1)
                 train_loss += loss.item() * y.size(0)
 
+                prob_total.append(prob.cpu().numpy())
                 pred_total.extend(predicted.cpu().numpy())
                 y_total.extend(y.cpu().numpy())
 
@@ -113,7 +116,8 @@ class Worker(object):
                        "loss": train_loss / train_total}
         return_dict.update(param_dict)
 
-        multiclass_eval_dict = evaluate_multiclass(y_total, pred_total)
+
+        multiclass_eval_dict = evaluate_multiclass(y_total, pred_total, prob_total)
         return_dict.update(multiclass_eval_dict)
 
         return local_solution, return_dict
@@ -123,21 +127,23 @@ class Worker(object):
         test_loss = 0
         y_total = []
         pred_total = []
+        prob_total = []
         with torch.no_grad():
             for x, y in test_dataloader:
                 if self.gpu:
                     x, y = x.cuda(), y.cuda()
 
-                pred = self.model(x)
-                loss = criterion(pred, y)
-                _, predicted = torch.max(pred, 1)
+                prob = self.model(x)
+                loss = criterion(prob, y)
+                _, predicted = torch.max(prob, 1)
 
+                prob_total.append(prob.cpu().numpy())
                 pred_total.extend(predicted.cpu().numpy())
                 y_total.extend(y.cpu().numpy())
 
                 test_loss += loss.item() * y.size(0)
 
-        multiclass_eval_dict = evaluate_multiclass(y_total, pred_total)
+        multiclass_eval_dict = evaluate_multiclass(y_total, pred_total, prob_total)
         return multiclass_eval_dict, test_loss
 
 

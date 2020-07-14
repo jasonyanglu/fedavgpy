@@ -80,8 +80,8 @@ class Worker(object):
         self.model.train()
         train_loss = 0
 
-        for i in range(self.num_epoch * 10):
-            x, y = next(iter(train_dataloader))
+        # for i in range(self.num_epoch * 10):
+        #     x, y = next(iter(train_dataloader))
 
         y_total = []
         pred_total = []

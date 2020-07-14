@@ -101,7 +101,7 @@ class Worker(object):
                 _, predicted = torch.max(prob, 1)
                 train_loss += loss.item() * y.size(0)
 
-                prob_total.append(prob.cpu().numpy())
+                prob_total.append(prob.cpu().detach().numpy())
                 pred_total.extend(predicted.cpu().numpy())
                 y_total.extend(y.cpu().numpy())
 
@@ -137,7 +137,7 @@ class Worker(object):
                 loss = criterion(prob, y)
                 _, predicted = torch.max(prob, 1)
 
-                prob_total.append(prob.cpu().numpy())
+                prob_total.append(prob.cpu().detach().numpy())
                 pred_total.extend(predicted.cpu().numpy())
                 y_total.extend(y.cpu().numpy())
 

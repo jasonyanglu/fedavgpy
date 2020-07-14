@@ -19,6 +19,7 @@ IMAGE_DATA = True
 IMAGE_SIZE = [32, 32]
 DATASET_FILE = os.path.join(cpath, 'data/cifar10/data')
 
+
 class ImageDataset(object):
     def __init__(self, images, labels, normalize=False):
         if isinstance(images, torch.Tensor):
@@ -150,7 +151,7 @@ def main():
     test = ImageDataset(testset.data, testset.targets)
 
     train_data = MiniDataset(train.data, train.target)
-    test_data = MiniDataset(train.data, train.target)
+    test_data = MiniDataset(test.data, test.target)
 
     # Call appropriate trainer
     trainer = BatchCNN(train_data, test_data)

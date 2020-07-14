@@ -78,33 +78,31 @@ class Worker(object):
                 2.2 loss
         """
         self.model.train()
-        train_loss = 0
-
-        # for i in range(self.num_epoch * 10):
-        #     x, y = next(iter(train_dataloader))
 
         y_total = []
         pred_total = []
 
-        for epoch in range(self.num_epoch):
-            train_loss = 0
-            for batch_idx, (x, y) in enumerate(train_dataloader):
-                if self.gpu:
-                    x, y = x.cuda(), y.cuda()
+        train_loss = 0
+        # for epoch in range(self.num_epoch):
+            # for batch_idx, (x, y) in enumerate(train_dataloader):
+        for i in range(self.num_epoch * 10):
+            x, y = next(iter(train_dataloader))
+            if self.gpu:
+                x, y = x.cuda(), y.cuda()
 
-                self.optimizer.zero_grad()
-                pred = self.model(x)
+            self.optimizer.zero_grad()
+            pred = self.model(x)
 
-                loss = criterion(pred, y)
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
-                self.optimizer.step()
+            loss = criterion(pred, y)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
+            self.optimizer.step()
 
-                _, predicted = torch.max(pred, 1)
-                train_loss += loss.item() * y.size(0)
+            _, predicted = torch.max(pred, 1)
+            train_loss += loss.item() * y.size(0)
 
-                pred_total.extend(predicted.cpu().numpy())
-                y_total.extend(y.cpu().numpy())
+            pred_total.extend(predicted.cpu().numpy())
+            y_total.extend(y.cpu().numpy())
 
         train_total = len(y_total)
 

@@ -117,17 +117,17 @@ def main():
     print(user, np.array([len(v) for v in traindata]))
 
     for d in range(num_class):
-        l = len(traindata[d][-1])
-        train_X[user] = traindata[d]
-        train_y[user] = (d * np.ones(l)).tolist()
+        l = len(traindata[d])
+        train_X[user] += traindata[d].tolist()
+        train_y[user] += (d * np.ones(l)).tolist()
 
-        l = len(testdata[d][-1])
-        test_X[user] = testdata[d]
-        test_y[user] = (d * np.ones(l)).tolist()
+        l = len(testdata[d])
+        test_X[user] += testdata[d].tolist()
+        test_y[user] += (d * np.ones(l)).tolist()
 
     image = 1 if not options['use_1d_feature'] else 0
-    train_path = '{}/data/train/all_data_{}_iid_one_client.pkl'.format(os.path.join(cpath, options['dataset']), image)
-    test_path = '{}/data/test/all_data_{}_iid_one_client.pkl'.format(os.path.join(cpath, options['dataset']), image)
+    train_path = '{}/data/train/all_data_{}_one_client.pkl'.format(os.path.join(cpath, options['dataset']), image)
+    test_path = '{}/data/test/all_data_{}_one_client.pkl'.format(os.path.join(cpath, options['dataset']), image)
 
     dir_path = os.path.dirname(train_path)
     if not os.path.exists(dir_path):

@@ -105,7 +105,9 @@ class BaseTrainer(object):
         stats = []  # Buffer for receiving client communication costs
         for i, c in enumerate(selected_clients, start=1):
             # Communicate the latest model
+            print(np.sum(c.get_flat_model_params()))
             c.set_flat_model_params(self.latest_model)
+            print(np.sum(c.get_flat_model_params()))
 
             # Solve minimization locally
             soln, stat = c.local_train()

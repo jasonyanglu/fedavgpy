@@ -78,6 +78,7 @@ class Worker(object):
                 2.1 comp: total FLOPS, computed by (# epoch) * (# data) * (# one-shot FLOPS)
                 2.2 loss
         """
+        self.optimizer.soft_decay_learning_rate()
         self.model.train()
 
         y_total = []

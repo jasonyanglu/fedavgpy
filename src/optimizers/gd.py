@@ -45,7 +45,7 @@ class GD(Optimizer):
             param_group['lr'] = lr
 
     def soft_decay_learning_rate(self):
-        self.lr *= 0.99
+        self.lr *= 0.992
         for param_group in self.param_groups:
             param_group['lr'] = self.lr
 

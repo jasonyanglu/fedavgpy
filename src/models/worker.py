@@ -117,7 +117,6 @@ class Worker(object):
                        "loss": train_loss / train_total}
         return_dict.update(param_dict)
 
-
         multiclass_eval_dict = evaluate_multiclass(y_total, pred_total, prob_total)
         return_dict.update(multiclass_eval_dict)
 

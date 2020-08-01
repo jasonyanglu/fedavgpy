@@ -54,7 +54,9 @@ class ImageDataset(object):
         return len(self.target)
 
 
-def data_split(data, num_split):
+def data_split(data, num_split, random=True):
+    if random:
+        np.random.shuffle(data)
     delta, r = len(data) // num_split, len(data) % num_split
     data_lst = []
     i, used_r = 0, 0

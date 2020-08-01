@@ -53,7 +53,8 @@ def evaluate_multiclass(y, pred, prob):
     unique_class = np.unique(y)
 
     return_dict = {}
-    return_dict['mauc'] = roc_auc_score(y, prob, average='macro', multi_class='ovo')
+    # return_dict['mauc'] = roc_auc_score(y, prob, average='macro', multi_class='ovo')
+    return_dict['mauc'] = 0
     return_dict['egmean'] = extended_gmean(y, pred, unique_class)
     return_dict['mfm'] = macro_f1_score(y, pred, unique_class)
     return_dict['mava'] = macro_avg_acc(y, pred, unique_class)

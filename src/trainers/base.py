@@ -18,6 +18,7 @@ class BaseTrainer(object):
 
         self.gpu = options['gpu']
         self.batch_size = options['batch_size']
+        self.lr_decay = options['lr_decay']
         self.all_train_data_num = 0
         self.clients = self.setup_clients(dataset)
         assert len(self.clients) > 0
@@ -101,6 +102,9 @@ class BaseTrainer(object):
             solns: local solutions, list of the tuple (num_sample, local_solution)
             stats: Dict of some statistics
         """
+
+        self.worker.optimizer.soft_decay_learning_rate(self.lr_decay)
+
         solns = []  # Buffer for receiving client solutions
         stats = []  # Buffer for receiving client communication costs
         for i, c in enumerate(selected_clients, start=1):

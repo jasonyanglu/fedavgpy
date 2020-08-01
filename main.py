@@ -70,6 +70,10 @@ def read_options():
                         help='learning rate for inner solver;',
                         type=float,
                         default=0.1)
+    parser.add_argument('--lr_decay',
+                        help='soft decay for learning rate;',
+                        type=float,
+                        default=0.992)
     parser.add_argument('--seed',
                         help='seed for randomness;',
                         type=int,

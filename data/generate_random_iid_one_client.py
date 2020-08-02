@@ -24,7 +24,7 @@ def read_options():
                         help='represent the image data by 1d feature')
     parser.add_argument('--num_client',
                         help='number of clients',
-                        default=1,
+                        default=10,
                         type=int)
 
     parsed = parser.parse_args()

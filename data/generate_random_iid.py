@@ -142,8 +142,8 @@ def main():
             test_y[user] += (d * np.ones(l)).tolist()
 
     image = 1 if not options['use_1d_feature'] else 0
-    train_path = '{}/data/train/all_data_{}_iid.pkl'.format(os.path.join(cpath, options['dataset']), image)
-    test_path = '{}/data/test/all_data_{}_iid.pkl'.format(os.path.join(cpath, options['dataset']), image)
+    train_path = '{}/data/train/all_data_{}_clients_iid.pkl'.format(os.path.join(cpath, options['dataset']), options['num_client'])
+    test_path = '{}/data/test/all_data_{}_clients_iid.pkl'.format(os.path.join(cpath, options['dataset']), options['num_client'])
 
     dir_path = os.path.dirname(train_path)
     if not os.path.exists(dir_path):

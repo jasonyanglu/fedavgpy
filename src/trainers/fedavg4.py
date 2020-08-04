@@ -27,7 +27,7 @@ class FedAvg4Trainer(BaseTrainer):
         print('>>> Select {} clients per round \n'.format(self.clients_per_round))
 
         # Fetch latest flat model parameter
-        self.latest_model = self.worker.get_flat_model_params().detach()
+        self.latest_model_params = self.worker.get_flat_model_params().detach()
 
         for round_i in range(self.num_round):
 
@@ -49,7 +49,7 @@ class FedAvg4Trainer(BaseTrainer):
             self.metrics.extend_commu_stats(round_i, stats)
 
             # Update latest model
-            self.latest_model = self.aggregate(solns, repeated_times=repeated_times)
+            self.latest_model_params = self.aggregate(solns, repeated_times=repeated_times)
             self.optimizer.inverse_prop_decay_learning_rate(round_i)
 
         # Test final model on train data
@@ -84,7 +84,7 @@ class FedAvg4Trainer(BaseTrainer):
         return select_clients, repeated_times
 
     def aggregate(self, solns, **kwargs):
-        averaged_solution = torch.zeros_like(self.latest_model)
+        averaged_solution = torch.zeros_like(self.latest_model_params)
         # averaged_solution = np.zeros(self.latest_model.shape)
         if self.simple_average:
             repeated_times = kwargs['repeated_times']

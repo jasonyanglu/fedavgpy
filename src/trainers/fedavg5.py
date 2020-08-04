@@ -26,7 +26,7 @@ class FedAvg5Trainer(BaseTrainer):
         print('>>> Select {} clients per round \n'.format(self.clients_per_round))
 
         # Fetch latest flat model parameter
-        self.latest_model = self.worker.get_flat_model_params().detach()
+        self.latest_model_params = self.worker.get_flat_model_params().detach()
 
         for round_i in range(self.num_round):
 
@@ -44,7 +44,7 @@ class FedAvg5Trainer(BaseTrainer):
             self.metrics.extend_commu_stats(round_i, stats)
 
             # Update latest model
-            self.latest_model = self.aggregate(solns)
+            self.latest_model_params = self.aggregate(solns)
             self.optimizer.inverse_prop_decay_learning_rate(round_i)
 
         # Test final model on train data
@@ -55,11 +55,11 @@ class FedAvg5Trainer(BaseTrainer):
         self.metrics.write()
 
     def aggregate(self, solns):
-        averaged_solution = torch.zeros_like(self.latest_model)
+        averaged_solution = torch.zeros_like(self.latest_model_params)
         accum_sample_num = 0
         for num_sample, local_solution in solns:
             accum_sample_num += num_sample
             averaged_solution += num_sample * local_solution
         averaged_solution /= self.all_train_data_num
-        averaged_solution += (1-accum_sample_num/self.all_train_data_num) * self.latest_model
+        averaged_solution += (1-accum_sample_num/self.all_train_data_num) * self.latest_model_params
         return averaged_solution.detach()

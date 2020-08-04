@@ -25,7 +25,7 @@ class FedAvg9Trainer(BaseTrainer):
         print('>>> Select {} clients per round \n'.format(self.clients_per_round))
 
         # Fetch latest flat model parameter
-        self.latest_model = self.worker.get_flat_model_params().detach()
+        self.latest_model_params = self.worker.get_flat_model_params().detach()
 
         for round_i in range(self.num_round):
 
@@ -43,7 +43,7 @@ class FedAvg9Trainer(BaseTrainer):
             self.metrics.extend_commu_stats(round_i, stats)
 
             # Update latest model
-            self.latest_model = self.aggregate(solns)
+            self.latest_model_params = self.aggregate(solns)
             self.optimizer.inverse_prop_decay_learning_rate(round_i)
 
         # Test final model on train data
@@ -54,7 +54,7 @@ class FedAvg9Trainer(BaseTrainer):
         self.metrics.write()
 
     def aggregate(self, solns, **kwargs):
-        averaged_solution = torch.zeros_like(self.latest_model)
+        averaged_solution = torch.zeros_like(self.latest_model_params)
         # averaged_solution = np.zeros(self.latest_model.shape)
         assert self.simple_average
 
@@ -70,7 +70,7 @@ class FedAvg9Trainer(BaseTrainer):
         stats = []  # Buffer for receiving client communication costs
         for i, c in enumerate(selected_clients, start=1):
             # Communicate the latest model
-            c.set_flat_model_params(self.latest_model)
+            c.set_flat_model_params(self.latest_model_params)
 
             # Solve minimization locally
             m = len(c.train_data)/self.all_train_data_num*100

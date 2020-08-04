@@ -17,7 +17,7 @@ class FedAvgTrainerImba(BaseTrainer):
         print('>>> Select {} clients per round \n'.format(self.clients_per_round))
 
         # Fetch latest flat model parameter
-        self.latest_model = self.worker.get_flat_model_params().detach()
+        self.latest_model_params = self.worker.get_flat_model_params().detach()
 
         for round_i in range(self.num_round):
 
@@ -35,7 +35,7 @@ class FedAvgTrainerImba(BaseTrainer):
             self.metrics.extend_commu_stats(round_i, stats)
 
             # Update latest model
-            self.latest_model = self.aggregate(solns)
+            self.latest_model_params = self.aggregate(solns)
             self.optimizer.inverse_prop_decay_learning_rate(round_i)
 
         # Test final model on train data

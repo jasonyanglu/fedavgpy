@@ -35,7 +35,7 @@ class BaseTrainer(object):
         self.name = '_'.join([name, f'wn{self.clients_per_round}', f'tn{len(self.clients)}'])
         self.metrics = Metrics(self.clients, options, self.name)
         self.print_result = not options['noprint']
-        self.latest_model = self.worker.get_flat_model_params()
+        self.latest_model_params = self.worker.get_flat_model_params()
 
     @staticmethod
     def move_model_to_gpu(model, options):
@@ -109,7 +109,7 @@ class BaseTrainer(object):
         stats = []  # Buffer for receiving client communication costs
         for i, c in enumerate(selected_clients, start=1):
             # Communicate the latest model
-            c.set_flat_model_params(self.latest_model)
+            c.set_flat_model_params(self.latest_model_params)
 
             # Solve minimization locally
             soln, stat = c.local_train()
@@ -138,7 +138,7 @@ class BaseTrainer(object):
             flat global model parameter
         """
 
-        averaged_solution = torch.zeros_like(self.latest_model)
+        averaged_solution = torch.zeros_like(self.latest_model_params)
         # averaged_solution = np.zeros(self.latest_model.shape)
         # if self.simple_average:
         #     num = 0
@@ -163,7 +163,7 @@ class BaseTrainer(object):
         stats_from_train_data = self.local_test(use_eval_data=False)
 
         # Record the global gradient
-        model_len = len(self.latest_model)
+        model_len = len(self.latest_model_params)
         global_grads = np.zeros(model_len)
         num_samples = []
         local_grads = []
@@ -215,8 +215,8 @@ class BaseTrainer(object):
         self.metrics.update_eval_stats(round_i, stats_from_eval_data)
 
     def local_test(self, use_eval_data=True):
-        assert self.latest_model is not None
-        self.worker.set_flat_model_params(self.latest_model)
+        assert self.latest_model_params is not None
+        self.worker.set_flat_model_params(self.latest_model_params)
 
         num_samples = []
         test_eval_dict_list = []

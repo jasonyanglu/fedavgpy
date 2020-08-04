@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import importlib
+from torch.nn.parameter import Parameter
+from torch import Tensor, mul
 import math
 
 from torchvision.models import resnet
@@ -100,6 +102,19 @@ class CifarCnn(nn.Module):
         out = F.relu(self.fc2(out))
         out = self.fc3(out)
         return out
+
+
+class CostSensitiveWeight(nn.Module):
+    def __init__(self, dim):
+        super(CostSensitiveWeight, self).__init__()
+        self.cs_weight = Parameter(Tensor(dim))
+
+    def forward(self, x, detach=False):
+        if detach:
+            logit = mul(x, self.cs_weight.detach())
+        else:
+            logit = mul(x, self.cs_weight)
+        return logit
 
 
 def choose_model(options):

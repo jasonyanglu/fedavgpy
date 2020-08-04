@@ -58,8 +58,10 @@ class ImageDataset(object):
         return len(self.target)
 
 
-def data_split_imbalance(data, num_split, imbalance_raio):
+def data_split_imbalance(data, num_split, imbalance_raio, random=True):
 
+    if random:
+        np.random.shuffle(data)
     data_num = len(data)
     min_data_num = round(data_num * imbalance_raio)
     min_data = data[:min_data_num]

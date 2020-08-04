@@ -1,5 +1,6 @@
 import time
 from torch.utils.data import DataLoader
+from src.models.worker import ImbaWorker
 
 
 class Client(object):
@@ -89,3 +90,39 @@ class Client(object):
         test_eval_dict, loss = self.worker.local_test(dataloader)
 
         return test_eval_dict, len(dataset), loss
+
+
+class ImbaClient(Client):
+    def __init__(self, cid, group, train_data, test_data, batch_size, worker):
+        self.cs_model_params = self.worker.get_flat_cs_model_params()
+        super(ImbaClient, self).__init__(cid, group, train_data, test_data, batch_size, worker)
+
+    def local_train(self, **kwargs):
+        """Solves local optimization problem
+
+        Returns:
+            1: num_samples: number of samples used in training
+            1: soln: local optimization solution
+            2. Statistic Dict contain
+                2.1: bytes_write: number of bytes transmitted
+                2.2: comp: number of FLOPs executed in training process
+                2.3: bytes_read: number of bytes received
+                2.4: other stats in train process
+        """
+
+        self.worker.set_flat_cs_model_params(self.cs_model_params)
+        bytes_w = self.worker.model_bytes
+        begin_time = time.time()
+        local_solution, worker_stats = self.worker.local_train(self.train_dataloader, **kwargs)
+        end_time = time.time()
+        bytes_r = self.worker.model_bytes
+        self.cs_model_params = self.worker.get_flat_cs_model_params()
+
+        stats = {'id': self.cid, 'bytes_w': bytes_w, 'bytes_r': bytes_r,
+                 "time": round(end_time-begin_time, 2)}
+        stats.update(worker_stats)
+
+        return (len(self.train_data), local_solution), stats
+
+
+

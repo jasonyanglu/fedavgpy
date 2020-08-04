@@ -238,3 +238,111 @@ class LrAdjustWorker(Worker):
 
         self.optimizer.set_lr(current_lr)
         return local_solution, return_dict
+
+
+class ImbaWorker(Worker):
+    def __init__(self, model, cs_model, optimizer, options):
+        self.cs_model = cs_model
+        super(ImbaWorker, self).__init__(model, optimizer, options)
+
+    def get_flat_cs_model_params(self):
+        flat_params = get_flat_params_from(self.cs_model)
+        return flat_params.detach()
+
+    def set_flat_cs_model_params(self, flat_params):
+        set_flat_params_to(self.cs_model, flat_params)
+
+    def local_train(self, train_dataloader, **kwargs):
+        """Train model locally and return new parameter and computation cost
+
+        Args:
+            train_dataloader: DataLoader class in Pytorch
+
+        Returns
+            1. local_solution: updated new parameter
+            2. stat: Dict, contain stats
+                2.1 comp: total FLOPS, computed by (# epoch) * (# data) * (# one-shot FLOPS)
+                2.2 loss
+        """
+
+        self.model.train()
+
+        # optimize on cost-sensitive parameters
+        for epoch in range(self.num_epoch):
+            for batch_idx, (x, y) in enumerate(train_dataloader):
+                if self.gpu:
+                    x, y = x.cuda(), y.cuda()
+
+                self.optimizer.zero_grad()
+                prob = self.model(x).detach()
+
+                # add cost-sensitive weight to the score.
+                batch_size, num_class = prob.shape
+                padded_prob = torch.zeros(batch_size, num_class ** 2)
+                cs_prob = torch.zeros_like(prob)
+                if self.gpu:
+                    padded_prob, cs_prob = padded_prob.cuda(), cs_prob.cuda()
+                for i in range(batch_size):
+                    padded_prob[i][y[i] * num_class:(y[i] + 1) * num_class] = prob[i]
+                padded_cs_prob = self.cs_model(padded_prob)
+                for i in range(batch_size):
+                    cs_prob[i] = padded_cs_prob[i][y[i] * num_class:(y[i] + 1) * num_class]
+                loss = criterion(cs_prob, y)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
+                self.optimizer.step()
+
+
+        y_total = []
+        pred_total = []
+        prob_total = []
+        train_loss = 0
+
+        # optimize on model parameters
+        for epoch in range(self.num_epoch):
+            for batch_idx, (x, y) in enumerate(train_dataloader):
+                if self.gpu:
+                    x, y = x.cuda(), y.cuda()
+
+                self.optimizer.zero_grad()
+                prob = self.model(x)
+
+                # add cost-sensitive weight to the score.
+                batch_size, num_class = prob.shape
+                padded_prob = torch.zeros(batch_size, num_class ** 2)
+                cs_prob = torch.zeros_like(prob)
+                if self.gpu:
+                    padded_prob, cs_prob = padded_prob.cuda(), cs_prob.cuda()
+                for i in range(batch_size):
+                    padded_prob[i][y[i] * num_class:(y[i] + 1) * num_class] = prob[i]
+                padded_cs_prob = self.cs_model(padded_prob, detach=True)
+                for i in range(batch_size):
+                    cs_prob[i] = padded_cs_prob[i][y[i] * num_class:(y[i] + 1) * num_class]
+                loss = criterion(cs_prob, y)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 60)
+                self.optimizer.step()
+
+                _, predicted = torch.max(prob, 1)
+                train_loss += loss.item() * y.size(0)
+
+                prob_total.append(prob.cpu().detach().numpy())
+                pred_total.extend(predicted.cpu().numpy())
+                y_total.extend(y.cpu().numpy())
+
+        train_total = len(y_total)
+
+        local_solution = self.get_flat_model_params()
+        param_dict = {"norm": torch.norm(local_solution).item(),
+                      "max": local_solution.max().item(),
+                      "min": local_solution.min().item()}
+        comp = self.num_epoch * train_total * self.flops
+        return_dict = {"comp": comp,
+                       "loss": train_loss / train_total}
+        return_dict.update(param_dict)
+
+        multiclass_eval_dict = evaluate_multiclass(y_total, pred_total, prob_total)
+        return_dict.update(multiclass_eval_dict)
+
+        return local_solution, return_dict
+

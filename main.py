@@ -62,12 +62,20 @@ def read_options():
                         help='batch size when clients train on data;',
                         type=int,
                         default=64)
+    parser.add_argument('--val_batch_size',
+                        help='batch size for validation data;',
+                        type=int,
+                        default=32)
     parser.add_argument('--num_epoch',
                         help='number of epochs when clients train on data;',
                         type=int,
                         default=5)
     parser.add_argument('--lr',
                         help='learning rate for inner solver;',
+                        type=float,
+                        default=0.1)
+    parser.add_argument('--meta_lr',
+                        help='learning rate for meta learner;',
                         type=float,
                         default=0.1)
     parser.add_argument('--lr_decay',
@@ -123,10 +131,11 @@ def main():
     options, trainer_class, dataset_name, sub_data = read_options()
 
     train_path = os.path.join('./data', dataset_name, 'data', 'train')
+    val_path = os.path.join('./data', dataset_name, 'data', 'validate')
     test_path = os.path.join('./data', dataset_name, 'data', 'test')
 
     # `dataset` is a tuple like (cids, groups, train_data, test_data)
-    all_data_info = read_data(train_path, test_path, sub_data)
+    all_data_info = read_data(train_path, test_path, val_path, sub_data)
 
     # Call appropriate trainer
     trainer = trainer_class(options, all_data_info)

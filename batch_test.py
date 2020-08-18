@@ -127,7 +127,7 @@ class BatchCNN:
             if epoch % 5 == 0:
                 test_loss = test_acc = test_total = 0.
                 with torch.no_grad():
-                    for x, y in self.test_dataloader:
+                    for x, y, _ in self.test_dataloader:
 
                         pred = self.model(x)
                         loss = self.criterion(pred, y)

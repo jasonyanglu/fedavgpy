@@ -7,20 +7,14 @@ from src.models.worker import Worker, LrdWorker
 
 
 class BaseTrainer(object):
-    def __init__(self, options, dataset, model=None, optimizer=None, name='', worker=None):
-        if model is not None and optimizer is not None:
-            self.worker = Worker(model, optimizer, options)
-        elif worker is not None:
-            self.worker = worker
-        else:
-            raise ValueError("Unable to establish a worker! Check your input parameter!")
-        print('>>> Activate a worker for training')
+    def __init__(self, options, dataset, name=''):
 
         self.gpu = options['gpu']
         self.batch_size = options['batch_size']
+        self.val_batch_size = options['val_batch_size']
         self.lr_decay = options['lr_decay']
         self.all_train_data_num = 0
-        self.clients = self.setup_clients(dataset)
+        self.clients = self.setup_clients(dataset, options)
         assert len(self.clients) > 0
         print('>>> Initialize {} clients in total'.format(len(self.clients)))
 
@@ -35,26 +29,15 @@ class BaseTrainer(object):
         self.name = '_'.join([name, f'wn{self.clients_per_round}', f'tn{len(self.clients)}'])
         self.metrics = Metrics(self.clients, options, self.name)
         self.print_result = not options['noprint']
-        self.latest_model_params = self.worker.get_flat_model_params()
+        self.latest_model_params = self.clients[0].worker.get_flat_model_params()
 
-    @staticmethod
-    def move_model_to_gpu(model, options):
-        if 'gpu' in options and (options['gpu'] is True):
-            device = 0 if 'device' not in options else options['device']
-            torch.cuda.set_device(device)
-            torch.backends.cudnn.enabled = True
-            model.cuda()
-            print('>>> Use gpu on device {}'.format(device))
-        else:
-            print('>>> Do not use gpu')
-
-    def setup_clients(self, dataset):
+    def setup_clients(self, dataset, options):
         """Instantiates clients based on given train and test data directories
 
         Returns:
             all_clients: List of clients
         """
-        users, groups, train_data, test_data = dataset
+        users, groups, train_data, test_data, val_data = dataset
         if len(groups) == 0:
             groups = [None for _ in users]
 
@@ -65,7 +48,8 @@ class BaseTrainer(object):
             else:
                 user_id = int(user)
             self.all_train_data_num += len(train_data[user])
-            c = Client(user_id, group, train_data[user], test_data[user], self.batch_size, self.worker)
+            c = Client(user_id, group, train_data[user], test_data[user], val_data[user], self.batch_size,
+                       self.val_batch_size, options)
             all_clients.append(c)
         return all_clients
 
@@ -103,13 +87,13 @@ class BaseTrainer(object):
             stats: Dict of some statistics
         """
 
-        self.worker.optimizer.soft_decay_learning_rate(self.lr_decay)
-
         solns = []  # Buffer for receiving client solutions
         stats = []  # Buffer for receiving client communication costs
         for i, c in enumerate(selected_clients, start=1):
             # Communicate the latest model
-            c.set_flat_model_params(self.latest_model_params)
+            # c.set_flat_model_params(self.latest_model_params)
+            c.worker.optimizer.soft_decay_learning_rate(self.lr_decay)
+            c.worker.set_flat_model_params(self.latest_model_params)
 
             # Solve minimization locally
             soln, stat = c.local_train()
@@ -169,7 +153,7 @@ class BaseTrainer(object):
         local_grads = []
 
         for c in self.clients:
-            (num, client_grad), stat = c.solve_grad()
+            num, client_grad = c.solve_grad()
             local_grads.append(client_grad)
             num_samples.append(num)
             global_grads += client_grad * num
@@ -215,14 +199,16 @@ class BaseTrainer(object):
         self.metrics.update_eval_stats(round_i, stats_from_eval_data)
 
     def local_test(self, use_eval_data=True):
-        assert self.latest_model_params is not None
-        self.worker.set_flat_model_params(self.latest_model_params)
+        # assert self.latest_model_params is not None
+        # self.worker.set_flat_model_params(self.latest_model_params)
 
         num_samples = []
         test_eval_dict_list = []
         tot_test_eval_dict = {}
         losses = []
         for c in self.clients:
+            c.worker.set_flat_model_params(self.latest_model_params)
+
             test_eval_dict, num_sample, loss = c.local_test(use_eval_data=use_eval_data)
 
             test_eval_dict_list.append(test_eval_dict)

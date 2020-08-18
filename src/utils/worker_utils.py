@@ -18,7 +18,7 @@ def mkdir(path):
     return path
 
 
-def read_data(train_data_dir, test_data_dir, key=None):
+def read_data(train_data_dir, test_data_dir, val_data_dir, key=None):
     """Parses data in given train and test data directories
 
     Assumes:
@@ -36,6 +36,7 @@ def read_data(train_data_dir, test_data_dir, key=None):
     groups = []
     train_data = {}
     test_data = {}
+    val_data = {}
     print('>>> Read data from:')
 
     train_files = os.listdir(train_data_dir)
@@ -57,6 +58,22 @@ def read_data(train_data_dir, test_data_dir, key=None):
     for cid, v in train_data.items():
         train_data[cid] = MiniDataset(v['x'], v['y'])
 
+    val_files = os.listdir(val_data_dir)
+    val_files = [f for f in val_files if f.endswith('.pkl')]
+    if key is not None:
+        val_files = list(filter(lambda x: str(key) in x, val_files))
+
+    for f in val_files:
+        file_path = os.path.join(val_data_dir, f)
+        print('    ', file_path)
+
+        with open(file_path, 'rb') as inf:
+            cdata = pickle.load(inf)
+        val_data.update(cdata['user_data'])
+
+    for cid, v in val_data.items():
+        val_data[cid] = MiniDataset(v['x'], v['y'])
+
     test_files = os.listdir(test_data_dir)
     test_files = [f for f in test_files if f.endswith('.pkl')]
     if key is not None:
@@ -75,7 +92,7 @@ def read_data(train_data_dir, test_data_dir, key=None):
 
     clients = list(sorted(train_data.keys()))
 
-    return clients, groups, train_data, test_data
+    return clients, groups, train_data, test_data, val_data
 
 
 class MiniDataset(Dataset):
@@ -122,7 +139,7 @@ class MiniDataset(Dataset):
         if self.transform is not None:
             data = self.transform(data)
 
-        return data, target
+        return data, target, index
 
 
 class Metrics(object):

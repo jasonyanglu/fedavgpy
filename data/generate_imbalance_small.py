@@ -180,8 +180,8 @@ def main():
         train_size = [len(split_traindata[chosen_classes[0]][0][-1]), len(split_traindata[chosen_classes[1]][1][-1])]
         for i, d in enumerate(chosen_classes):
             tmp_data = split_traindata[d][i].pop().tolist()
-            train_X[user] += tmp_data
-            train_y[user] += (d * np.ones(train_size[i])).tolist()
+            train_X[user] += tmp_data[:2*train_size[1]]
+            train_y[user] += (d * np.ones(train_size[1])).tolist()
             val_X[user] += tmp_data[:train_size[1]]  # use the minority class size
             val_y[user] += (d * np.ones(train_size[1])).tolist()
 
@@ -190,9 +190,9 @@ def main():
             test_y[user] += (d * np.ones(test_size)).tolist()
 
     image = 1 if not options['use_1d_feature'] else 0
-    train_path = '{}/data/train/all_data_{}_imbalance.pkl'.format(os.path.join(cpath, options['dataset']), image)
-    val_path = '{}/data/validate/all_data_{}_imbalance.pkl'.format(os.path.join(cpath, options['dataset']), image)
-    test_path = '{}/data/test/all_data_{}_imbalance.pkl'.format(os.path.join(cpath, options['dataset']), image)
+    train_path = '{}/data/train/all_data_{}_small.pkl'.format(os.path.join(cpath, options['dataset']), image)
+    val_path = '{}/data/validate/all_data_{}_small.pkl'.format(os.path.join(cpath, options['dataset']), image)
+    test_path = '{}/data/test/all_data_{}_small.pkl'.format(os.path.join(cpath, options['dataset']), image)
 
     dir_path = os.path.dirname(train_path)
     if not os.path.exists(dir_path):
